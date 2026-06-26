@@ -52,6 +52,9 @@ variable {C}
 
 namespace Presheaf
 
+@[simp] theorem id_app {X : TopCat.{w}} {U : (Opens X)ᵒᵖ} {P : Presheaf C X}
+    : NatTrans.app (𝟙 P) U = 𝟙 _ := rfl
+
 @[simp] theorem comp_app {X : TopCat.{w}} {U : (Opens X)ᵒᵖ} {P Q R : Presheaf C X}
     (f : P ⟶ Q) (g : Q ⟶ R) :
     (f ≫ g).app U = f.app U ≫ g.app U := rfl
