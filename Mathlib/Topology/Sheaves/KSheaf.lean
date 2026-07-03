@@ -197,12 +197,12 @@ lemma toKPresheafFunctorObjObj_ι_desc {K : Compacts X}
 value of it's coresponding Kpresheaf -/
 def ιToKPresheafFunctorObjObjRc (U : (K.openRcNhds)) :
     F.obj (op U.val) ⟶ F.toKPresheafFunctorObjObj K :=
-  F.ιToKPresheafFunctorObjObj (K.mono_oRcNhds_to_openNhds.functor.obj U)
+  F.ιToKPresheafFunctorObjObj (K.openRcNhdsToOpenNhds_mono.functor.obj U)
 
 @[reassoc (attr := simp)]
 lemma toKPresheafFunctorObjObjRc_w {U V : (K.openRcNhds)} (i : op U ⟶ op V) :
     F.map i ≫ F.ιToKPresheafFunctorObjObjRc V = F.ιToKPresheafFunctorObjObjRc U :=
-  F.toKPresheafFunctorObjObj_w <| op (K.mono_oRcNhds_to_openNhds.functor.map i.unop)
+  F.toKPresheafFunctorObjObj_w <| op (K.openRcNhdsToOpenNhds_mono.functor.map i.unop)
 
 variable (K) in
 set_option backward.defeqAttrib.useBackward true in
@@ -217,7 +217,7 @@ variable (K) in
 /-- The evidence that `F.toKPresheafFunctorObjObjRcCocone` is a colimit cocone -/
 def isColimitToKPresheafFunctorObjObjRcCocone [T2Space X] [LocallyCompactSpace X] :
     IsColimit (toKPresheafFunctorObjObjRcCocone F K) :=
-  (Functor.Final.isColimitWhiskerEquiv (K.mono_oRcNhds_to_openNhds.functor.op) _).2
+  (Functor.Final.isColimitWhiskerEquiv (K.openRcNhdsToOpenNhds_mono.functor.op) _).2
   (isColimitToKPresheafFunctorObjObjCocone _ _)
 
 variable {F} in
@@ -238,14 +238,14 @@ lemma toKPresheafFunctorObjObjRc_ι_desc [T2Space X] [LocallyCompactSpace X] {K 
 /-- The `.map` component of `TopCat.Presheaf.toKPresheafFunctorObj` -/
 def toKPresheafFunctorObjMap {K L : Compacts X} (i : K ⟶ L) :
     F.toKPresheafFunctorObjObj L ⟶ F.toKPresheafFunctorObjObj K :=
-  colimit.pre ((Subtype.mono_coe K.openNhds).functor.op ⋙ F) (monoBaseChangeOpenNhds i).functor.op
+  colimit.pre ((Subtype.mono_coe K.openNhds).functor.op ⋙ F) (baseChangeOpenNhds_mono i).functor.op
 
 @[reassoc (attr := simp)]
 lemma ι_toKPresheafFunctorObjMap {K L : Compacts X} (i : K ⟶ L) (U : L.openNhds) :
     F.ιToKPresheafFunctorObjObj U ≫ F.toKPresheafFunctorObjMap i =
-    F.ιToKPresheafFunctorObjObj ( (monoBaseChangeOpenNhds i).functor.obj U) :=
+    F.ιToKPresheafFunctorObjObj ((baseChangeOpenNhds_mono i).functor.obj U) :=
   colimit.ι_pre ((Subtype.mono_coe K.openNhds).functor.op ⋙ F)
-  (monoBaseChangeOpenNhds i).functor.op _
+  (baseChangeOpenNhds_mono i).functor.op _
 
 set_option backward.isDefEq.respectTransparency false in
 /-- The Kpresheaf associated to a presheaf -/
@@ -298,15 +298,16 @@ variable [HasLimitsOfSize.{w, w} A] (G : KPresheaf A X) {U : Opens X}
 variable (U) in
 /-- The `.obj` component of `TopCat.KPresheaf.toPresheafFunctorObj` -/
 def toPresheafFunctorObjObj (U : Opens X) : A :=
-  limit ((Subtype.mono_coe U.compactInsd).functor.op ⋙ G)
+  limit ((Subtype.mono_coe U.compactsInside).functor.op ⋙ G)
 
 /-- The canonical map to a value of the Kpresheaf over a compact subset to a value of it's
 coresponding Presheaf -/
-def πToPresheafFunctorObjObj (K : U.compactInsd) : G.toPresheafFunctorObjObj U ⟶ G.obj (op K.val) :=
-  limit.π ((Subtype.mono_coe U.compactInsd).functor.op ⋙ G) _
+def πToPresheafFunctorObjObj (K : U.compactsInside) :
+    G.toPresheafFunctorObjObj U ⟶ G.obj (op K.val) :=
+  limit.π ((Subtype.mono_coe U.compactsInside).functor.op ⋙ G) _
 
 @[reassoc (attr := simp)]
-lemma toPresheafFunctorObjObj_w {K L : U.compactInsd} (i : op K ⟶ op L) :
+lemma toPresheafFunctorObjObj_w {K L : U.compactsInside} (i : op K ⟶ op L) :
     G.πToPresheafFunctorObjObj K ≫ G.map i = G.πToPresheafFunctorObjObj L := limit.w _ i
 
 variable (U) in
@@ -314,7 +315,7 @@ set_option backward.defeqAttrib.useBackward true in
 /-- The cone structure of `G.toPresheafFunctorObjObj U` over all values of compacts subset
 inside `U` -/
 @[simps]
-def toPresheafFunctorObjObjCone : Cone ((Subtype.mono_coe U.compactInsd).functor.op ⋙ G) where
+def toPresheafFunctorObjObjCone : Cone ((Subtype.mono_coe U.compactsInside).functor.op ⋙ G) where
   pt := G.toPresheafFunctorObjObj U
   π.app U := πToPresheafFunctorObjObj G U.unop
 
@@ -325,26 +326,27 @@ def isLimitToPresheafFunctorObjObjCone : IsLimit (toPresheafFunctorObjObjCone G 
 
 @[ext]
 lemma toPresheafFunctorObjObj_hom_ext {Y : A} (f g : Y ⟶ G.toPresheafFunctorObjObj U)
-    (h : ∀ K : U.compactInsd, f ≫ G.πToPresheafFunctorObjObj K = g ≫ G.πToPresheafFunctorObjObj K )
-    : f = g := (G.isLimitToPresheafFunctorObjObjCone _ ).hom_ext (fun _ ↦ h _)
+    (h : ∀ K : U.compactsInside, f ≫ G.πToPresheafFunctorObjObj K =
+    g ≫ G.πToPresheafFunctorObjObj K) : f = g :=
+  (G.isLimitToPresheafFunctorObjObjCone _ ).hom_ext (fun _ ↦ h _)
 
 @[reassoc (attr := simp)]
 lemma toPresheafFunctorObjObj_lift_π {U : Opens X}
-    (c : Cone <| (Subtype.mono_coe U.compactInsd).functor.op ⋙ G) (K : U.compactInsd) :
+    (c : Cone <| (Subtype.mono_coe U.compactsInside).functor.op ⋙ G) (K : U.compactsInside) :
     (G.isLimitToPresheafFunctorObjObjCone _ ).lift c ≫ G.πToPresheafFunctorObjObj K =
   c.π.app (op K) := limit.lift_π c (op K)
 
 /-- The `.map` component of `TopCat.KPresheaf.toPresheafFunctorObj` -/
 def toPresheafFunctorObjMap {U V : Opens X} (i : U ⟶ V) :
     G.toPresheafFunctorObjObj V ⟶ G.toPresheafFunctorObjObj U :=
-  limit.pre ((Subtype.mono_coe V.compactInsd).functor.op ⋙ G)
-  (monoBaseChangeCompactInsd i).functor.op
+  limit.pre ((Subtype.mono_coe V.compactsInside).functor.op ⋙ G)
+  (baseChangeCompactsInside_mono i).functor.op
 
 @[reassoc (attr := simp)]
-lemma toPresheafFunctorObjMap_π {U V : Opens X} (i : U ⟶ V) (K : U.compactInsd) :
+lemma toPresheafFunctorObjMap_π {U V : Opens X} (i : U ⟶ V) (K : U.compactsInside) :
     G.toPresheafFunctorObjMap i ≫ G.πToPresheafFunctorObjObj K =
-    G.πToPresheafFunctorObjObj ( (monoBaseChangeCompactInsd i).functor.obj K) :=
-  limit.pre_π _ (monoBaseChangeCompactInsd i).functor.op (op K)
+    G.πToPresheafFunctorObjObj ( (baseChangeCompactsInside_mono i).functor.obj K) :=
+  limit.pre_π _ (baseChangeCompactsInside_mono i).functor.op (op K)
 
 set_option backward.isDefEq.respectTransparency false in
 /-- The presheaf associated to a Kpresheaf -/
@@ -360,7 +362,7 @@ def toPresheafFunctorMapApp {G1 G2 : KPresheaf A (of X)} (σ : G1 ⟶ G2) (U : O
 
 @[reassoc (attr := simp)]
 lemma toPresheafFunctorMapApp_π {G1 G2 : KPresheaf A (of X)} (σ : G1 ⟶ G2) {U : Opens X}
-    (K : U.compactInsd) : toPresheafFunctorMapApp σ U ≫ G2.πToPresheafFunctorObjObj K =
+    (K : U.compactsInside) : toPresheafFunctorMapApp σ U ≫ G2.πToPresheafFunctorObjObj K =
     G1.πToPresheafFunctorObjObj K ≫ σ.app (op K.val) := limMap_π _ (op K)
 
 set_option backward.isDefEq.respectTransparency false in
@@ -381,11 +383,14 @@ def toPresheafFunctor : KPresheaf A (of X) ⥤ Presheaf A (of X) where
 
 end KPresheaf
 
-namespace KPresheaf.adjunction
+namespace KPresheaf
 
 variable [HasColimitsOfSize.{w, w} A] [HasLimitsOfSize.{w, w} A]
 
 open TopCat Presheaf Compacts Opens
+
+namespace adjunction
+
 variable {F : Presheaf A (of X)} {G : KPresheaf A X} (τ : (toKPresheafFunctor).obj F ⟶ G)
   (σ : F ⟶ (KPresheaf.toPresheafFunctor).obj G) (K : Compacts X) (U : Opens X)
 
@@ -393,36 +398,37 @@ set_option backward.defeqAttrib.useBackward true in
 set_option backward.isDefEq.respectTransparency false in
 /-- The Cone to buid `KPresheaf.adjunction.homEquivToFunhomEquivToFun` -/
 @[simps]
-def homEquivToFunCone : Cone <| (Subtype.mono_coe U.compactInsd).functor.op ⋙ G where
+def homEquivToFunCone : Cone <| (Subtype.mono_coe U.compactsInside).functor.op ⋙ G where
   pt := F.obj (op U)
-  π.app K := F.ιToKPresheafFunctorObjObj (toOpenNhds K.unop) ≫ τ.app (op K.unop.val)
+  π.app K := F.ιToKPresheafFunctorObjObj (openNhdsOfCompactsInside K.unop) ≫ τ.app (op K.unop.val)
   π.naturality {K L} i:= by
     simp [← τ.naturality]
     rfl
 
 set_option backward.defeqAttrib.useBackward true in
 set_option backward.isDefEq.respectTransparency false in
-/-- The function from hom(F.toKPresheafFunctorObj, G) to hom(F,G.toPresheafFunctorObj) -/
+/-- The function from `F.toKPresheafFunctorObj ⟶ G` to `F ⟶ G.toPresheafFunctorObj` -/
 @[simps]
 def homEquivToFun : F ⟶ toPresheafFunctor.obj G where
  app U := (G.isLimitToPresheafFunctorObjObjCone U.unop).lift (homEquivToFunCone τ U.unop)
  naturality {U V} i := by
   apply toPresheafFunctorObjObj_hom_ext
   intro K
-  simpa [baseChangeCompactInsd] using toKPresheafFunctorObjObj_w_assoc _ (show
-  op (toOpenNhds (baseChangeCompactInsd i.unop K)) ⟶ op (toOpenNhds K) from i) _
+  simpa [baseChangeCompactsInside] using toKPresheafFunctorObjObj_w_assoc _ (show
+    op (openNhdsOfCompactsInside (baseChangeCompactsInside i.unop K)) ⟶
+    op (openNhdsOfCompactsInside K) from i) _
 
 set_option backward.defeqAttrib.useBackward true in
 set_option backward.isDefEq.respectTransparency false in
-/-- The Cocone to buid `KPresheaf.adjunction.homEquivInvFunhomEquivToFun` -/
+/-- The Cocone to build `KPresheaf.adjunction.homEquivInvFunhomEquivToFun` -/
 @[simps]
 def homEquivInvFunCocone : Cocone <| (Subtype.mono_coe K.openNhds).functor.op ⋙ F where
   pt := G.obj (op K)
-  ι.app U := σ.app _ ≫ G.πToPresheafFunctorObjObj (toCompactInsd U.unop)
+  ι.app U := σ.app _ ≫ G.πToPresheafFunctorObjObj (compactsInsideOfOpenNhds U.unop)
 
 set_option backward.defeqAttrib.useBackward true in
 set_option backward.isDefEq.respectTransparency false in
-/-- The function from hom(F,G.toPresheafFunctorObj) to hom(F.toKPresheafFunctorObj, G) -/
+/-- The function from `F ⟶ G.toPresheafFunctorObj` to `F.toKPresheafFunctorObj ⟶ G` -/
 @[simps]
 def homEquivInvFun : toKPresheafFunctor.obj F ⟶ G where
  app K := (F.isColimitToKPresheafFunctorObjObjCocone K.unop).desc (homEquivInvFunCocone σ _)
@@ -430,12 +436,13 @@ def homEquivInvFun : toKPresheafFunctor.obj F ⟶ G where
   apply toKPresheafFunctorObjObj_hom_ext
   intro U
   simpa [baseChangeOpenNhds] using whisker_eq _ (toPresheafFunctorObjObj_w G (show
-  op (toCompactInsd U) ⟶ op (toCompactInsd (baseChangeOpenNhds i.unop U)) from i)).symm
+  op (compactsInsideOfOpenNhds U) ⟶
+  op (compactsInsideOfOpenNhds (baseChangeOpenNhds i.unop U)) from i)).symm
 
 variable (F) in
 set_option backward.defeqAttrib.useBackward true in
 set_option backward.isDefEq.respectTransparency false in
-/-- The bijection between hom(F.toKPresheafFunctorObj, G) and hom(F,G.toPresheafFunctorObj) -/
+/-- The bijection between `F.toKPresheafFunctorObj ⟶ G` to `F ⟶ G.toPresheafFunctorObj` -/
 def homEquiv : (toKPresheafFunctor.obj F ⟶ G) ≃ (F ⟶ toPresheafFunctor.obj G) where
  toFun := homEquivToFun
  invFun := fun σ ↦ homEquivInvFun σ
@@ -449,13 +456,15 @@ attribute [local simp] homEquiv in
 `toPresheafFunctor` -/
 def coreHomEquiv :
     Adjunction.CoreHomEquiv (toKPresheafFunctor (A := A) (X := X)) toPresheafFunctor where
-  homEquiv := adjunction.homEquiv
+  homEquiv := homEquiv
+
+end adjunction
 
 /-- The adjunction between `toKpresheafFunctor` and `toPresheafFunctor` -/
-def Adjunction : (toKPresheafFunctor (A := A) (X := X)) ⊣ (toPresheafFunctor ) :=
-  Adjunction.mkOfHomEquiv coreHomEquiv
+def adjunction : (toKPresheafFunctor (A := A) (X := X)) ⊣ (toPresheafFunctor ) :=
+  Adjunction.mkOfHomEquiv adjunction.coreHomEquiv
 
-end KPresheaf.adjunction
+end KPresheaf
 
 end
 
