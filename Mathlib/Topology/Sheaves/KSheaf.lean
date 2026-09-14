@@ -345,7 +345,7 @@ def toPresheafFunctorObjMap {U V : Opens X} (i : U ⟶ V) :
 @[reassoc (attr := simp)]
 lemma toPresheafFunctorObjMap_π {U V : Opens X} (i : U ⟶ V) (K : U.compactsInside) :
     G.toPresheafFunctorObjMap i ≫ G.πToPresheafFunctorObjObj K =
-    G.πToPresheafFunctorObjObj ( (baseChangeCompactsInside_mono i).functor.obj K) :=
+    G.πToPresheafFunctorObjObj ((baseChangeCompactsInside_mono i).functor.obj K) :=
   limit.pre_π _ (baseChangeCompactsInside_mono i).functor.op (op K)
 
 set_option backward.isDefEq.respectTransparency false in
