@@ -32,6 +32,43 @@ namespace TopCat
 
 namespace KPresheaf
 
+@[simp]
+theorem id_app (P : KPresheaf A X) (K : (Compacts X)ᵒᵖ) : NatTrans.app (𝟙 P) K = 𝟙 _ := rfl
+
+@[simp]
+theorem comp_app (P Q R : KPresheaf A X) (K : (Compacts X)ᵒᵖ) (f : P ⟶ Q) (g : Q ⟶ R) :
+    (f ≫ g).app K = f.app K ≫ g.app K := rfl
+
+@[ext]
+lemma ext (P Q : KPresheaf A X) (f g : P ⟶ Q) (w : ∀ K : Compacts X, f.app (op K) = g.app (op K)) :
+    f = g := by
+  apply NatTrans.ext
+  ext K
+  induction K with | _ K => ?_
+  apply w
+
+set_option backward.isDefEq.respectTransparency false in
+set_option backward.defeqAttrib.useBackward true in
+/-- If `P` is a KPresheaf, and `K` a compact subset then `P.obj (op K)` is equiped with a
+structure of cocone over the diagramm defined by the `P.obj (op L)` for `L` a compact
+neighbourhood of `K` -/
+@[simps]
+def coconeOfCompacts (P : KPresheaf A X) (K : Compacts X) :
+    Cocone ((Subtype.mono_coe K.compactNhds).functor.op ⋙ P) where
+  pt := P.obj (op K)
+  ι.app K' := P.map <| opHomOfLE (Compacts.subset_of_mem_compactNhds K'.unop.prop)
+  ι.naturality _ _ _ := by
+    dsimp
+    rw [← P.map_comp, Category.comp_id]
+    rfl
+
+/-- For `P` a KPresheaf, and `K` a compact subset then `P.obj (op K)` is equiped with a
+structure of cocone over the diagramm defined by the `P.obj (op (closure (U : Set X))`
+for `U` an open
+neighbourhood of `K` -/
+def coconeOfClosureOfOpens (P : KPresheaf A X) (K : Compacts X) :=
+  Cocone.whisker K.openRcNhdsToCompactNhds_mono.functor.op <| P.coconeOfCompacts K
+
 variable [T2Space X]
 
 set_option backward.isDefEq.respectTransparency false in
@@ -52,6 +89,7 @@ lemma hom_K_ext (P : KPresheaf A X) {K : Compacts X} (h : (IsColimit (P.coconeOf
     : f = f' :=
   ((Functor.Final.isColimitWhiskerEquiv _ _).invFun h ).hom_ext w
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The Ksheaf condition. It's a generalisation of the one of J.Pardon that
 corespond to the one of J.Lurie in the case of usual categories.
 
@@ -68,9 +106,11 @@ structure IsKSheaf (P : KPresheaf A X) : Prop where
 
 end KPresheaf
 
-variable (X A) [T2Space X]in
+variable [T2Space X]
+
+variable (X A) in
 /-- The category of Ksheaves taking values in `A` on a T2Space. -/
-abbrev KSheaf := ObjectProperty.FullSubcategory (KPresheaf.IsKSheaf (X := X) (A := A))
+abbrev KSheaf := ObjectProperty.FullSubcategory (KPresheaf.isKSheaf A X)
 
 namespace KSheaf
 
