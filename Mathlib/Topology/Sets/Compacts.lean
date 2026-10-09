@@ -351,6 +351,7 @@ lemma closure_mem_compactNhds_of_mem_openRcNhds {K : Compacts α} {U : Opens α}
 
 /-- The converting map from relatively compact opens
 neighbourhood of a compact subset to its opens neighbourhoods -/
+@[implicit_reducible]
 def openRcNhdsToOpenNhds (K : Compacts α) : K.openRcNhds → K.openNhds :=
   fun U ↦ ⟨_, U.property.2⟩
 
@@ -360,6 +361,7 @@ lemma openRcNhdsToOpenNhds_mono (K : Compacts α) :
 /-- An open relatively compact neighbourhood of `K` induces a compact neighbourhood by taking
 the closure
 -/
+@[implicit_reducible]
 def openRcNhdsToCompactNhds (K : Compacts α) : K.openRcNhds → K.compactNhds :=
   fun U ↦ ⟨_, closure_mem_compactNhds_of_mem_openRcNhds (Subtype.coe_prop U)⟩
 
@@ -384,12 +386,14 @@ def compactsInside (U : Opens α) : Set (Compacts α) := {K | (K : Set α) ⊆ U
 
 /-- For `K` a compact subset inside an open subset `U`, `U` has a structure of open neighbourhood
 of `K` -/
+@[implicit_reducible]
 def openNhdsOfCompactsInside {U : Opens α} (K : U.compactsInside) : (K.val).openNhds :=
   ⟨U, K.property⟩
 
 end Opens
 
 /-- For `U` an open neighbourhood of `K`, `K` has a structure of compact inside `U` -/
+@[implicit_reducible]
 def Compacts.compactsInsideOfOpenNhds {K : Compacts α} (U : K.openNhds) : (U.val).compactsInside :=
   ⟨K, U.property⟩
 

@@ -32,42 +32,6 @@ namespace TopCat
 
 namespace KPresheaf
 
-@[simp]
-theorem id_app (P : KPresheaf A X) (K : (Compacts X)ᵒᵖ) : NatTrans.app (𝟙 P) K = 𝟙 _ := rfl
-
-@[simp]
-theorem comp_app (P Q R : KPresheaf A X) (K : (Compacts X)ᵒᵖ) (f : P ⟶ Q) (g : Q ⟶ R) :
-    (f ≫ g).app K = f.app K ≫ g.app K := rfl
-
-@[ext]
-lemma ext (P Q : KPresheaf A X) (f g : P ⟶ Q) (w : ∀ K : Compacts X, f.app (op K) = g.app (op K)) :
-    f = g := by
-  apply NatTrans.ext
-  ext K
-  induction K with | _ K => ?_
-  apply w
-
-/-- If `P` is a KPresheaf, and `K` a compact subset then `P.obj (op K)` is equiped with a
-structure of cocone over the diagram defined by the `P.obj (op L)` for `L` a compact
-neighbourhood of `K` -/
-@[simps, implicit_reducible]
-def coconeOfCompacts (P : KPresheaf A X) (K : Compacts X) :
-    Cocone ((Set.mono_coe K.compactNhds).functor.op ⋙ P) where
-  pt := P.obj (op K)
-  ι.app K' := P.map <| opHomOfLE (Compacts.subset_of_mem_compactNhds K'.unop.prop)
-  ι.naturality _ _ _ := by
-    dsimp
-    rw [← P.map_comp, Category.comp_id]
-    rfl
-
-/-- For `P` a KPresheaf, and `K` a compact subset then `P.obj (op K)` is equiped with a
-structure of cocone over the diagram defined by the `P.obj (op (closure (U : Set X))`
-for `U` an open
-neighbourhood of `K` -/
-@[simps!, implicit_reducible]
-def coconeOfClosureOfOpens (P : KPresheaf A X) (K : Compacts X) :=
-  Cocone.whisker K.openRcNhdsToCompactNhds_mono.functor.op <| P.coconeOfCompacts K
-
 variable [T2Space X]
 
 /-- For`K`a compact and `P`a KPresheaf verifying the third axiom of KSheaves, this is
@@ -117,7 +81,12 @@ abbrev KSheaf := ObjectProperty.FullSubcategory (KPresheaf.isKSheaf A X)
 
 namespace KSheaf
 
-variable [T2Space X]
+/-- If `P`is a KSheaf, its the evidence that for any `K`a compact subset of `X`,
+ `P.obj.coconeOfCompacts K`is a colimit cocone
+-/
+noncomputable def isColimit (P : KSheaf A X) (K : Compacts X) :
+    IsColimit (P.obj.coconeOfCompacts K) :=
+  (P.property.nonempty_isColimit_coconeOfCompacts K).some
 
 lemma isoOfIsIsoApp {F G : KSheaf A X} (τ : F ⟶ G)
     (h : ∀ (K : Compacts X), IsIso <| τ.hom.app (op K)) : IsIso τ :=
@@ -146,7 +115,6 @@ end KSheaf
 
 noncomputable section
 
-variable [T2Space X]
 
 namespace Sheaf
 
