@@ -77,7 +77,6 @@ def toKPresheafFunctorObjObj : A := colimit ((Set.mono_coe K.openNhds).functor.o
 
 /-- The canonical map from a value of the presheaf over an open subset to a value of it's
   coresponding Kpresheaf -/
-@[implicit_reducible]
 def ιToKPresheafFunctorObjObj (U : (K.openNhds)) :
     F.obj (op U.val) ⟶ F.toKPresheafFunctorObjObj K :=
   colimit.ι ((Set.mono_coe K.openNhds).functor.op ⋙ F) _
@@ -338,7 +337,7 @@ def homEquivInvFunCocone : Cocone <| (Set.mono_coe K.openNhds).functor.op ⋙ F 
 @[simps]
 def homEquivInvFun : toKPresheafFunctor.obj F ⟶ G where
  app K := (F.isColimitToKPresheafFunctorObjObjCocone K.unop).desc (homEquivInvFunCocone σ _)
- naturality {K L} i := by
+ naturality {K L} i := by--ça on doit pouvoir arriver à faire en sorte qu'il le fasse tout seul
   apply toKPresheafFunctorObjObj_hom_ext
   intro U
   simpa [baseChangeOpenNhds] using whisker_eq _ (toPresheafFunctorObjObj_w G (show
@@ -349,7 +348,7 @@ variable (F) in
 /-- The bijection between `F.toKPresheafFunctorObj ⟶ G` to `F ⟶ G.toPresheafFunctorObj` -/
 def homEquiv : (toKPresheafFunctor.obj F ⟶ G) ≃ (F ⟶ toPresheafFunctor.obj G) where
  toFun := homEquivToFun
- invFun := fun σ ↦ homEquivInvFun σ
+ invFun := homEquivInvFun
  left_inv _ := by aesop
  right_inv _ := by aesop
 
@@ -365,6 +364,44 @@ end adjunction
 /-- The adjunction between `toKpresheafFunctor` and `toPresheafFunctor` -/
 def adjunction : (toKPresheafFunctor (A := A) (X := X)) ⊣ (toPresheafFunctor ) :=
   Adjunction.mkOfHomEquiv adjunction.coreHomEquiv
+
+#check (adjunction (A:= A) (X := X)).unit
+
+@[simps]
+def adjunctionUnit' : 𝟭 (Presheaf A X) ⟶ toKPresheafFunctor ⋙ toPresheafFunctor where
+  app F := ⟨ fun U =>
+    (isLimitToPresheafFunctorObjObjCone (toKPresheafFunctorObj F) (unop U)).lift ⟨F.obj U,⟨fun K =>
+      F.ιToKPresheafFunctorObjObj (openNhdsOfCompactsInside K.unop),by aesop⟩⟩
+    , by
+    intro U V i
+    apply toPresheafFunctorObjObj_hom_ext
+    intro
+    simpa [openNhdsOfCompactsInside] using
+      toKPresheafFunctorObjObj_w F (show (op ⟨unop U, _⟩ ⟶ op ⟨unop V, _⟩ ) from i)
+    ⟩
+
+attribute [local simp] adjunction adjunction.coreHomEquiv adjunction.homEquiv in
+@[simp]
+lemma adjunctionUnitEq : (adjunction (A:= A) (X := X)).unit = adjunctionUnit' := by
+  aesop
+
+@[simps]
+def adjunctionCounit' :  toPresheafFunctor ⋙ toKPresheafFunctor ⟶  𝟭 (KPresheaf A X) where
+  app F := ⟨ fun K =>
+    (isColimitToKPresheafFunctorObjObjCocone (toPresheafFunctorObj F) (unop K)).desc ⟨F.obj K,⟨fun U
+      => F.πToPresheafFunctorObjObj (compactsInsideOfOpenNhds U.unop),by aesop⟩⟩
+    , by
+    intro U V i
+    apply toKPresheafFunctorObjObj_hom_ext
+    intro
+    simpa [compactsInsideOfOpenNhds] using
+      (toPresheafFunctorObjObj_w F (show (op ⟨unop U, _⟩ ⟶ op ⟨unop V, _⟩ ) from i)).symm
+    ⟩
+
+attribute [local simp] adjunction adjunction.coreHomEquiv adjunction.homEquiv in
+@[simp]
+lemma adjunctionUCouitEq : (adjunction (A:= A) (X := X)).counit = adjunctionCounit' := by
+  aesop
 
 end KPresheaf
 
