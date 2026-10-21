@@ -8,6 +8,7 @@ module
 public import Mathlib.Topology.Sheaves.KPresheaf
 public import Mathlib.Topology.Sheaves.Sheaf
 public import Mathlib.Algebra.Category.Grp.AB
+public import Mathlib.Topology.Sheaves.SheafCondition.OpensLeCover
 
 /-!
 # Ksheaves
@@ -22,9 +23,37 @@ limit condition.
 
 @[expose] public section
 
-universe w v u
+universe z w v u
 
 open Topology CategoryTheory TopologicalSpace Compacts Opposite Limits
+
+/-A envoyer dans  Mathlib.CategoryTheory.ObjectProperty.FullSubcategory
+
+-/
+
+variable {C : Type u} [Category.{v} C] {D : Type w} [Category.{z} D]
+  {P : ObjectProperty C} {Q : ObjectProperty D}
+  {L : C ⥤ D} {R : D ⥤ C} (adj : L ⊣ R)
+  (hL : ∀ X, Q (L.obj (P.ι.obj X))) (hR : ∀ Y, P (R.obj (Q.ι.obj Y)))
+
+noncomputable def Adjunction.restrictFullSubcategory : Q.lift (P.ι ⋙ L) hL ⊣ P.lift (Q.ι ⋙ R) hR :=
+  Adjunction.restrictFullyFaithful adj P.fullyFaithfulι Q.fullyFaithfulι (eqToIso rfl) (eqToIso rfl)
+
+@[simp]
+lemma Adjunction.restrictFullSubcategory_unit_app (X : P.FullSubcategory) :
+    ((Adjunction.restrictFullSubcategory adj hL hR).unit.app X).hom = adj.unit.app (P.ι.obj X) := by
+  simpa using (show ((Adjunction.restrictFullSubcategory adj hL hR).unit.app X).hom = _ from
+    Adjunction.map_restrictFullyFaithful_unit_app adj P.fullyFaithfulι Q.fullyFaithfulι
+    (eqToIso rfl) (eqToIso rfl) X)
+
+@[simp]
+lemma Adjunction.restrictFullSubcategory_counit_app (Y : Q.FullSubcategory) :
+  ((Adjunction.restrictFullSubcategory adj hL hR).counit.app Y).hom = adj.counit.app (Q.ι.obj Y) :=
+    by
+  simpa using (show ((Adjunction.restrictFullSubcategory adj hL hR).counit.app Y).hom = _ from
+    Adjunction.map_restrictFullyFaithful_counit_app adj P.fullyFaithfulι Q.fullyFaithfulι
+    (eqToIso rfl) (eqToIso rfl) Y)
+/-fin-/
 
 variable {A : Type u} [Category.{v} A] {X : TopCat.{w}}
 
@@ -130,15 +159,36 @@ lemma toKPresheafFunctorObjIsKSheaf' (F : Sheaf A X) :
     (((forget A X).obj F).toKPresheafFunctorObj).IsKSheaf :=
   toKPresheafFunctorObjIsKSheaf _ F.property
 
+@[implicit_reducible]
 def toKSheafFunctor : Sheaf A X ⥤ KSheaf A X :=
   ObjectProperty.lift _ (Sheaf.forget A X ⋙ toKPresheafFunctor ) toKPresheafFunctorObjIsKSheaf'
+
+variable (F : Sheaf A X)
+
+
+@[simp]
+lemma truc1 : (toKSheafFunctor.obj F).obj = ((forget A X).obj F).toKPresheafFunctorObj := by rfl
+
+variable {F} in
+@[ext]
+lemma toKSheafFunctorObjObj_hom_ext {Y : A} {K : (Compacts X)ᵒᵖ}
+    (f g : (toKSheafFunctor.obj F).obj.obj K ⟶ Y)
+    (h : ∀ U : K.unop.openNhds, ((forget A X).obj F).ιToKPresheafFunctorObjObj U ≫ f =
+      ((forget A X).obj F).ιToKPresheafFunctorObjObj U ≫ g) :
+    f = g := toKPresheafFunctorObjObj_hom_ext _ _ h
+
+@[simp]
+lemma truc [HasLimitsOfSize.{w, w, v, u} A] {U : Opens X} (K : U.compactsInside) :
+    (toKSheafFunctor.obj F).obj.πToPresheafFunctorObjObj K =
+   (toKPresheafFunctorObj F.obj).πToPresheafFunctorObjObj K := by
+  rfl
+
 
 end Sheaf
 
 namespace KSheaf
 
 open KPresheaf
-
 
 variable [HasLimitsOfSize.{w, w, v, u} A]
 
@@ -150,11 +200,19 @@ lemma toPresheafFunctorObjIsSheaf' (F : KSheaf A X) :
     (F.obj.toPresheafFunctorObj).IsSheaf := by
   sorry
 
-
+@[implicit_reducible]
 def toSheafFunctor : KSheaf A X ⥤ Sheaf A X :=
   ObjectProperty.lift _ (ObjectProperty.ι _ ⋙ toPresheafFunctor) (toPresheafFunctorObjIsSheaf')
 
+variable (G : KSheaf A X)
 
+variable {G} in
+@[ext]
+lemma toKSheafFunctorObjObj_hom_ext {U : (Opens X)ᵒᵖ} {Y : A}
+    (f g : Y ⟶ (toSheafFunctor.obj G).obj.obj U)
+    (h : ∀ K : U.unop.compactsInside, f ≫ G.obj.πToPresheafFunctorObjObj K =
+      g ≫  G.obj.πToPresheafFunctorObjObj K) : f = g :=
+  toPresheafFunctorObjObj_hom_ext _ _ h
 
 open Sheaf
 
@@ -163,40 +221,84 @@ variable [HasColimitsOfSize.{w, w, v, u} A]
 /-- The adjunction between `toKSheafFunctor` and `toSheafFunctor` obtained by restricting the one
 between `toKPresheafFunctor` and `toPresheafFunctor`
 -/
+@[simps!]
  def adjunction : (toKSheafFunctor (A := A) (X := X)) ⊣ (toSheafFunctor ) :=
-  Adjunction.restrictFullyFaithful (KPresheaf.adjunction)
-  (ObjectProperty.fullyFaithfulι _) (ObjectProperty.fullyFaithfulι _)
-  (Iso.refl _) (Iso.refl _)
+  Adjunction.restrictFullSubcategory (KPresheaf.adjunction) _ _
+  --ça je le laisse pour raconter l'histoire TODO: à enlever
+  /-Adjunction.restrictFullyFaithful (KPresheaf.adjunction)
+  (Functor.FullyFaithful.ofFullyFaithful (Sheaf.forget A X))
+  ((isKSheaf A X).fullyFaithfulι)(Iso.refl_ ) (Iso.refl)-/
 
-variable (F : Sheaf A X)
+--set_option backward.isDefEq.respectTransparency false
+@[simp]
+lemma adjunction.unit_app (F : Sheaf A X) :
+    (adjunction.unit.app F).hom = (KPresheaf.adjunction.unit.app F.obj) :=
+  Adjunction.restrictFullSubcategory_unit_app _ _ _ _
 
-#check adjunction.unit.app F
+  /-let : (adjunction.unit.app F).hom = _ := Adjunction.map_restrictFullyFaithful_unit_app
+    (KPresheaf.adjunction (A := A) (X := X)) (Functor.FullyFaithful.ofFullyFaithful
+    (Sheaf.forget A X)) ((isKSheaf A X).fullyFaithfulι) _ _ F
 
-lemma truc (F : Presheaf A X) (hF : F.IsSheaf) :  IsIso ((KPresheaf.adjunction.unit.app F)) := by
-  #check  isoOfIsIsoApp (KPresheaf.adjunction.unit.app F)
+  rw [this]
 
-  sorry
-
+  simp [this]
+  rfl-/ -- ça ça marche avec des defeqabuses
+@[simp]
+lemma adjunction.counit_app (G : KSheaf A X) :
+    (adjunction.counit.app G).hom = (KPresheaf.adjunction.counit.app G.obj) :=
+  Adjunction.restrictFullSubcategory_counit_app _ _ _ _
 
 set_option backward.defeqAttrib.useBackward true in
 set_option backward.isDefEq.respectTransparency false in
-instance (F : Sheaf A X) : IsIso (adjunction.unit.app F) := by
- #check isoOfIsIsoApp (adjunction.unit.app F)
-
-  #check Adjunction.instIsIsoAppUnitOfFullOfFaithful
-
-  have : ∀ x, IsIso ((adjunction.unit.app F).app x) := by sorry
-  rw [NatTrans.isIso_iff_isIso_app]
+lemma truc (F : Presheaf A X) (hF : F.IsSheaf) :  IsIso ((KPresheaf.adjunction.unit.app F)) := by
+  suffices ∀ U, IsIso ((adjunctionUnit'.app F).app U) by
+    simpa using NatIso.isIso_of_isIso_app _
+  intro U
   constructor
-  apply?
-  sorry
+  let inv : ((Presheaf.toKPresheafFunctor ⋙ toPresheafFunctor).obj F).obj U ⟶ ((𝟭 (Presheaf A X)).obj F).obj U := by
+    dsimp
+    have : F.IsSheafOpensLeCover := by
+      apply (TopCat.Presheaf.isSheaf_iff_isSheafOpensLeCover _).1 hF
+
+
+
+    let V : U.unop.compactsInside → (Opens X) := fun K => ⟨interior K, isOpen_interior⟩
+
+    let s : Cone ((ObjectProperty.ι fun V_1 ↦ ∃ i, V_1 ≤ V i).op ⋙ F) := ⟨F.toKPresheafFunctorObj.toPresheafFunctorObjObj (unop U),
+      ⟨fun W => by
+        #check W.unop.property
+        #check W.unop.obj
+        dsimp
+        refine F.toKPresheafFunctorObj.πToPresheafFunctorObjObj ?_ ≫ ?_
+        · let cW : Compacts X := ⟨closure W.unop.obj,sorry⟩
+          exact ⟨cW,sorry⟩
+        · let cW : Compacts X := ⟨closure W.unop.obj,sorry⟩
+          let s : Cocone ((Set.mono_coe cW.openNhds).functor.op ⋙ F) := ⟨F.obj (op (unop W).obj),sorry⟩
+          exact (F.isColimitToKPresheafFunctorObjObjCocone cW ).desc s,sorry⟩⟩
+
+    apply (this V).some.lift s ≫ F.map (op (eqToHom ?_))
+
+    dsimp [V]
+    sorry
+  use inv
+  constructor
+  · unfold inv
+    aesop
+    sorry
+
+  · sorry
+
+instance (F : Sheaf A X) : IsIso (adjunction.unit.app F) := by
+  apply (ObjectProperty.isIso_hom_iff _).1
+  simp only [adjunction.unit_app]
+  apply truc _ F.property
 
 instance (F : KSheaf A X) : IsIso (adjunction.counit.app F) := by
 
   apply isoOfIsIsoApp
   intro K
   simp [adjunction, ]
-  simp
+  --simp
   sorry
 
 
@@ -218,5 +320,6 @@ end KSheaf
 end
 
 end TopCat
-
-#min_imports
+/-
+set_option backward.defeqAttrib.useBackward true in
+set_option backward.isDefEq.respectTransparency false in-/
