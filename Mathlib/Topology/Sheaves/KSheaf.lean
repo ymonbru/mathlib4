@@ -53,6 +53,30 @@ lemma Adjunction.restrictFullSubcategory_counit_app (Y : Q.FullSubcategory) :
   simpa using (show ((Adjunction.restrictFullSubcategory adj hL hR).counit.app Y).hom = _ from
     Adjunction.map_restrictFullyFaithful_counit_app adj P.fullyFaithfulι Q.fullyFaithfulι
     (eqToIso rfl) (eqToIso rfl) Y)
+
+def Lres := Q.lift (P.ι ⋙ L) hL
+
+def Rres := P.lift (Q.ι ⋙ R) hR
+
+
+noncomputable def adjRes : Lres hL ⊣ Rres hR := by
+  apply Adjunction.restrictFullyFaithful adj P.fullyFaithfulι Q.fullyFaithfulι (eqToIso rfl) (eqToIso rfl)
+
+lemma adjunit (X : P.FullSubcategory) :
+    ((adjRes adj hL hR).unit.app X).hom = adj.unit.app (P.ι.obj X) := by
+  simp [adjRes]
+
+  rw [Adjunction.map_restrictFullyFaithful_unit_app adj P.fullyFaithfulι Q.fullyFaithfulι
+    (eqToIso rfl) (eqToIso rfl) X]
+
+
+
+
+  sorry
+
+
+
+
 /-fin-/
 
 variable {A : Type u} [Category.{v} A] {X : TopCat.{w}}
@@ -248,8 +272,8 @@ lemma adjunction.counit_app (G : KSheaf A X) :
     (adjunction.counit.app G).hom = (KPresheaf.adjunction.counit.app G.obj) :=
   Adjunction.restrictFullSubcategory_counit_app _ _ _ _
 
-set_option backward.defeqAttrib.useBackward true in
-set_option backward.isDefEq.respectTransparency false in
+--set_option backward.defeqAttrib.useBackward true in
+--set_option backward.isDefEq.respectTransparency false in
 lemma truc (F : Presheaf A X) (hF : F.IsSheaf) :  IsIso ((KPresheaf.adjunction.unit.app F)) := by
   suffices ∀ U, IsIso ((adjunctionUnit'.app F).app U) by
     simpa using NatIso.isIso_of_isIso_app _
@@ -264,16 +288,20 @@ lemma truc (F : Presheaf A X) (hF : F.IsSheaf) :  IsIso ((KPresheaf.adjunction.u
 
     let V : U.unop.compactsInside → (Opens X) := fun K => ⟨interior K, isOpen_interior⟩
 
-    let s : Cone ((ObjectProperty.ι fun V_1 ↦ ∃ i, V_1 ≤ V i).op ⋙ F) := ⟨F.toKPresheafFunctorObj.toPresheafFunctorObjObj (unop U),
+    let s : Cone ((ObjectProperty.ι fun V_1 ↦ ∃ i, V_1 ≤ V i).op ⋙ F) :=
+      ⟨F.toKPresheafFunctorObj.toPresheafFunctorObjObj (unop U),
       ⟨fun W => by
-        #check W.unop.property
-        #check W.unop.obj
-        dsimp
+        let cW : Compacts X := ⟨closure W.unop.obj,by
+            obtain ⟨⟨K,_⟩,hK⟩ := W.unop.property
+            exact IsCompact.closure_of_subset K.isCompact <| Set.Subset.trans hK interior_subset⟩
         refine F.toKPresheafFunctorObj.πToPresheafFunctorObjObj ?_ ≫ ?_
-        · let cW : Compacts X := ⟨closure W.unop.obj,sorry⟩
-          exact ⟨cW,sorry⟩
-        · let cW : Compacts X := ⟨closure W.unop.obj,sorry⟩
-          let s : Cocone ((Set.mono_coe cW.openNhds).functor.op ⋙ F) := ⟨F.obj (op (unop W).obj),sorry⟩
+
+        · exact ⟨cW,by
+            obtain ⟨⟨K,hKU⟩,hK⟩ := W.unop.property
+            exact Set.Subset.trans (closure_minimal (Set.Subset.trans hK interior_subset)
+              <| IsCompact.isClosed K.isCompact) hKU⟩
+
+        · let s : Cocone ((Set.mono_coe cW.openNhds).functor.op ⋙ F) := ⟨F.obj (op (unop W).obj),sorry⟩
           exact (F.isColimitToKPresheafFunctorObjObjCocone cW ).desc s,sorry⟩⟩
 
     apply (this V).some.lift s ≫ F.map (op (eqToHom ?_))
