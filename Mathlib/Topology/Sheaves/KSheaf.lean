@@ -64,15 +64,18 @@ noncomputable def adjRes : Lres hL ⊣ Rres hR := by
 
 lemma adjunit (X : P.FullSubcategory) :
     ((adjRes adj hL hR).unit.app X).hom = adj.unit.app (P.ι.obj X) := by
-  simp [adjRes]
-
-  rw [Adjunction.map_restrictFullyFaithful_unit_app adj P.fullyFaithfulι Q.fullyFaithfulι
-    (eqToIso rfl) (eqToIso rfl) X]
-
-
+  --simp [adjRes]
+  let h : ((adjRes adj hL hR).unit.app X).hom = _ :=
+    Adjunction.map_restrictFullyFaithful_unit_app (L := Lres hL) (R := Rres hR) adj
+    P.fullyFaithfulι Q.fullyFaithfulι (eqToIso rfl) (eqToIso rfl) X
 
 
-  sorry
+
+  rw [h]
+  simp
+  unfold Lres Rres
+
+  simp
 
 
 
@@ -247,26 +250,29 @@ between `toKPresheafFunctor` and `toPresheafFunctor`
 -/
 @[simps!]
  def adjunction : (toKSheafFunctor (A := A) (X := X)) ⊣ (toSheafFunctor ) :=
-  Adjunction.restrictFullSubcategory (KPresheaf.adjunction) _ _
+  --Adjunction.restrictFullSubcategory (KPresheaf.adjunction) _ _
   --ça je le laisse pour raconter l'histoire TODO: à enlever
-  /-Adjunction.restrictFullyFaithful (KPresheaf.adjunction)
+  Adjunction.restrictFullyFaithful (KPresheaf.adjunction)
   (Functor.FullyFaithful.ofFullyFaithful (Sheaf.forget A X))
-  ((isKSheaf A X).fullyFaithfulι)(Iso.refl_ ) (Iso.refl)-/
+  ((isKSheaf A X).fullyFaithfulι) (Iso.refl _ ) (Iso.refl _)
 
 --set_option backward.isDefEq.respectTransparency false
 @[simp]
 lemma adjunction.unit_app (F : Sheaf A X) :
-    (adjunction.unit.app F).hom = (KPresheaf.adjunction.unit.app F.obj) :=
-  Adjunction.restrictFullSubcategory_unit_app _ _ _ _
+    (adjunction.unit.app F).hom = (KPresheaf.adjunction.unit.app F.obj) := Adjunction.restrictFullSubcategory_unit_app _ _ _ _
 
-  /-let : (adjunction.unit.app F).hom = _ := Adjunction.map_restrictFullyFaithful_unit_app
+
+  /-simpa using (show (adjunction.unit.app F).hom = _ from Adjunction.map_restrictFullyFaithful_unit_app
     (KPresheaf.adjunction (A := A) (X := X)) (Functor.FullyFaithful.ofFullyFaithful
-    (Sheaf.forget A X)) ((isKSheaf A X).fullyFaithfulι) _ _ F
+    (Sheaf.forget A X)) ((isKSheaf A X).fullyFaithfulι) _ _ F)
+
 
   rw [this]
-
-  simp [this]
-  rfl-/ -- ça ça marche avec des defeqabuses
+  simp
+  rfl
+  unfold toKSheafFunctor toSheafFunctor
+  simp
+  rfl -- ça ça marche avec des defeqabuses-/
 @[simp]
 lemma adjunction.counit_app (G : KSheaf A X) :
     (adjunction.counit.app G).hom = (KPresheaf.adjunction.counit.app G.obj) :=
