@@ -11,14 +11,32 @@ public import Mathlib.Algebra.Category.Grp.AB
 public import Mathlib.Topology.Sheaves.SheafCondition.OpensLeCover
 
 /-!
-# Ksheaves
+# K-sheaves
 
-We define K-sheaves on a T2 topological space with value in an arbitrary category.
+We define K-sheaves on `X` a T2 topological space with value in an arbitrary category `A`.
+
+This corespond to the  `F : (Compacts X)ᵒᵖ ⥤ A` such that:
+- `F.obj (∅)`  is terminal.
+- For any two compacts subsets `K₁` and  `K₂` of `X`, `F.obj (K₁ ∪ K₂)` is obtained by
+  gluing `F.obj K₁` and `F.obj K₂` over `F.obj K₁ ∩ K₂`.
+- For any compact subset `K` of `X`, `F.obj K` is the colimit of the `F.obj L` for all the compacts
+  subsets `L` of `X`such that `K` is in the interior of `L`.
 
 One may expect this notion to come from sheaves on a site of compact subset of a topological space
-but there is no coresponding Grothendieck topology on compact subsets, in particular
-because the `nonempty_isColimit_coconeOfCompacts` condition can't be expressed as a
-limit condition.
+but there is no corresponding Grothendieck topology on compact subsets, in particular
+because the `nonempty_isColimit_coconeOfCompacts` condition can't be expressed as a sheaf condition.
+
+However this category turns out to be equivalent to the category of sheaves over `X`,
+and is thus a topos.
+
+TODO: provide the equivalence of category (Yannis Monbru Carcelero)
+
+## References
+
+*[J. Pardon, *An algebraic approach to virtual fundamental cycles on moduli
+spaces of pseudo-holomorphic curves*, Section A.1][Pardon2016]
+*[Jacob Lurie, *Higher Topos Theory*, Section 1.1.5][LurieHTT]
+
 -/
 
 @[expose] public section
@@ -90,8 +108,8 @@ namespace KPresheaf
 
 variable [T2Space X]
 
-/-- For`K`a compact and `P`a KPresheaf verifying the third axiom of KSheaves, this is
-a recipe to build maps from `P.obj(op K)` by only using the open relatively
+/-- For`K`a compact and `P`a K-presheaf verifying the third axiom of K-sheaves, this is
+a recipe to build maps from `P.obj (op K)` by only using the open relatively
 compact neighbourhoods and not all the compacts neighbourhoods. -/
 noncomputable def mapOfOpenClosure (P : KPresheaf A X) (K : Compacts X)
     (h : (IsColimit (P.coconeOfCompacts K))) {G : (K.openRcNhds)ᵒᵖ ⥤ A} (t : Cocone G)
@@ -107,14 +125,11 @@ lemma hom_ext_of_isColimit_coconeOfCompacts (P : KPresheaf A X) {K : Compacts X}
       (P.coconeOfClosureOfOpens K).ι.app V ≫ f') :
     f = f' :=
   ((Functor.Final.isColimitWhiskerEquiv K.openRcNhdsToCompactNhds_mono.functor.op
-    _  ).symm h).hom_ext w
+    _).symm h).hom_ext w
 
-/-- The Ksheaf condition. It's a generalisation of the one of J.Pardon that
-corespond to the one of J.Lurie in the case of usual categories.
-
-There is no coresponding Grothendieck topology on compact subsets, in particular
-because the nonempty_isColimit_coconeOfCompacts condition can't be expressed as a
-limit condition. -/
+/-- The K-sheaf condition. It's a generalisation of the one of J.Pardon (definition A.1.4) that
+  correspond to the one of J.Lurie (definition 7.3.4.1) in the case of usual categories.
+-/
 structure IsKSheaf (P : KPresheaf A X) : Prop where
   nonempty_isTerminal : Nonempty (IsTerminal (P.obj (op ⊥)))
   isPullback {K₁ K₂ K₃ K₄ : Compacts X} (h : Lattice.BicartSq K₁ K₂ K₃ K₄) :
@@ -128,18 +143,19 @@ end KPresheaf
 variable [T2Space X]
 
 variable (X A) in
-/-- The object property of being a KSheaf -/
+/-- The object property of being a K-sheaf -/
 abbrev KPresheaf.isKSheaf : ObjectProperty (KPresheaf A X) := fun P ↦ P.IsKSheaf
 
 variable (X A) in
-/-- The category of Ksheaves taking values in `A` on a T2Space. -/
+/-- The category of K-sheaves taking values in `A` on a T2Space. -/
 abbrev KSheaf := ObjectProperty.FullSubcategory (KPresheaf.isKSheaf A X)
 
 namespace KSheaf
 
-/-- If `P`is a KSheaf, its the evidence that for any `K`a compact subset of `X`,
- `P.obj.coconeOfCompacts K`is a colimit cocone
+/-- If `P` is a K-sheaf, its the evidence that for any `K`a compact subset of `X`,
+ `P.obj.coconeOfCompacts K` is a colimit cocone
 -/
+@[no_expose]
 noncomputable def isColimit (P : KSheaf A X) (K : Compacts X) :
     IsColimit (P.obj.coconeOfCompacts K) :=
   (P.property.nonempty_isColimit_coconeOfCompacts K).some
