@@ -403,7 +403,21 @@ end adjunction
 def adjunction : (toKPresheafFunctor (A := A) (X := X)) ⊣ (toPresheafFunctor ) :=
   Adjunction.mkOfHomEquiv adjunction.coreHomEquiv
 
-@[simps, implicit_reducible]
+attribute [local simp] adjunction adjunction.coreHomEquiv adjunction.homEquiv in
+@[simp]
+lemma adjunctionUnitEq (F : Presheaf A X) (U : (Opens X)ᵒᵖ) (K : U.unop.compactsInside) :
+    (adjunction.unit.app F).app U ≫ (toKPresheafFunctor.obj F).πToPresheafFunctorObjObj K =
+    F.ιToKPresheafFunctorObjObj (openNhdsOfCompactsInside K):= by
+  aesop
+
+attribute [local simp] adjunction adjunction.coreHomEquiv adjunction.homEquiv in
+@[simp]
+lemma adjunctionCounitEq (G : KPresheaf A X) (K : (Compacts X)ᵒᵖ) (U : K.unop.openNhds) :
+    (toPresheafFunctor.obj G).ιToKPresheafFunctorObjObj U ≫ (adjunction.counit.app G).app K =
+    G.πToPresheafFunctorObjObj (compactsInsideOfOpenNhds U):= by
+  aesop
+
+/-@[simps, implicit_reducible]
 def adjunctionUnitCone (F : Presheaf A X) (U : (Opens X)ᵒᵖ) :
     Cone ((Set.mono_coe U.unop.compactsInside).functor.op ⋙ (toKPresheafFunctorObj F)) where
   pt := F.obj U
@@ -423,9 +437,11 @@ def adjunctionUnit' : 𝟭 (Presheaf A X) ⟶ toKPresheafFunctor ⋙ toPresheafF
       toKPresheafFunctorObjObj_w F (show (op ⟨unop U, _⟩ ⟶ op ⟨unop V, _⟩ ) from i)
     ⟩
 
+
+
 attribute [local simp] adjunction adjunction.coreHomEquiv adjunction.homEquiv in
 @[simp]
-lemma adjunctionUnitEq : (adjunction (A:= A) (X := X)).unit = adjunctionUnit' := by
+lemma adjunctionUnitEq' : (adjunction (A:= A) (X := X)).unit = adjunctionUnit' := by
   aesop
 
 @[simps]
@@ -444,7 +460,7 @@ def adjunctionCounit' :  toPresheafFunctor ⋙ toKPresheafFunctor ⟶  𝟭 (KPr
 attribute [local simp] adjunction adjunction.coreHomEquiv adjunction.homEquiv in
 @[simp]
 lemma adjunctionUCouitEq : (adjunction (A:= A) (X := X)).counit = adjunctionCounit' := by
-  aesop
+  aesop-/
 
 end KPresheaf
 
