@@ -10,6 +10,7 @@ public import Mathlib.Combinatorics.Quiver.ReflQuiver
 public import Mathlib.Order.CompleteLattice.MulticoequalizerDiagram
 public import Mathlib.Topology.Category.TopCat.Basic
 public import Mathlib.Topology.Sets.BaseChangeNhds
+public import Mathlib.CategoryTheory.ObjectProperty.FiniteLimits
 
 /-!
 # K-sheaves
@@ -139,6 +140,66 @@ instance : (KPresheaf.isKSheaf A X).IsClosedUnderIsomorphisms where
         ⟨(IsColimit.equivOfNatIsoOfIso (Functor.isoWhiskerLeft _ e) _ _
             (by exact Cocone.ext (e.app _)))
           (h.nonempty_isColimit_coconeOfCompacts K).some⟩ }
+
+variable {J K : Type*} [Category* J] [Category* K]
+variable {C : Type*} [Category* C]
+variable (F : J ⥤ K ⥤ C) (D : DiagramOfCones F) (Df : DiagramOfCones F.flip)
+
+variable (Q : ∀ j, IsLimit (D.obj j)) (c : Cone D.conePoints) (hc : IsLimit c)
+variable (Qf : ∀ k, IsLimit (Df.obj k)) (cf : Cone Df.conePoints) (hcf : IsLimit cf)
+
+def truc : c.pt ≅ cf.pt := by
+
+
+  sorry
+
+
+
+instance [HasLimitsOfSize.{w,w} A] [HasLimitsOfSize.{0,0} A] : (KPresheaf.isKSheaf A X).IsClosedUnderFiniteLimits where
+  isClosedUnderLimitsOfShape J _ _ :=
+    {
+      limitsOfShape_le := by
+        intro F ⟨⟨diag,π,isLimit⟩ ,h⟩
+        exact {
+          nonempty_isTerminal := by
+            apply Nonempty.intro
+            have j : J := by sorry
+
+            --have D : J ⥤ _ ⥤ A := (Functor.const J).obj (Functor.empty A)
+            #check CategoryTheory.Limits.limitFlipCompLimIsoLimitCompLim
+
+            #check diag.flip.obj (op ⊥)
+            #check dsimp% (h j).nonempty_isTerminal.some
+
+            let D : DiagramOfCones <| (Functor.const J).obj (Functor.empty A) :=
+              {
+                obj j := asEmptyCone <| (diag.obj j).obj (op ⊥ )
+                map {j j'} f:= {
+                  hom := IsTerminal.from (h j').nonempty_isTerminal.some _
+                  }
+              }
+
+            let l := coneOfConeUncurryIsLimit (D := D) (Q := fun j => (h j).nonempty_isTerminal.some) (c := {
+                  pt := (F.obj (op ⊥))
+                  π := {
+                    app x:= PEmpty.elim x.2.1
+                  }
+                  })
+            unfold coneOfConeUncurry  Functor.uncurry at l
+            simp at l
+            exact l
+
+
+
+
+
+            sorry
+          isPullback sq := by
+
+            sorry
+          nonempty_isColimit_coconeOfCompacts := sorry
+        }
+    }
 
 namespace KSheaf
 
