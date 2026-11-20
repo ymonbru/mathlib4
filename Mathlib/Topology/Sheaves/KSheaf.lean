@@ -11,6 +11,7 @@ public import Mathlib.Order.CompleteLattice.MulticoequalizerDiagram
 public import Mathlib.Topology.Category.TopCat.Basic
 public import Mathlib.Topology.Sets.BaseChangeNhds
 public import Mathlib.CategoryTheory.ObjectProperty.FiniteLimits
+public import Mathlib.CategoryTheory.Limits.IsLimit
 
 /-!
 # K-sheaves
@@ -148,7 +149,68 @@ variable (F : J ⥤ K ⥤ C) (D : DiagramOfCones F) (Df : DiagramOfCones F.flip)
 variable (Q : ∀ j, IsLimit (D.obj j)) (c : Cone D.conePoints) (hc : IsLimit c)
 variable (Qf : ∀ k, IsLimit (Df.obj k)) (cf : Cone Df.conePoints) (hcf : IsLimit cf)
 
+instance : Functor.Final <| CategoryTheory.Prod.swap J K:= by
+  infer_instance
+
+
+@[implicit_reducible,simps]
+def bidule : Cone (Functor.uncurry.obj F) where
+  pt := c.pt
+  π.app x := (c.π.app x.1) ≫ (D.obj x.1).π.app x.2
+  π.naturality {x y} f := by
+
+
+    dsimp
+    #check (D.obj y.1).w f.2
+    rw [← (D.obj y.1).w f.2,← c.w f.1]
+    --simp
+    --repeat rw [Category.assoc]
+
+
+    --conv_lhs => rw [← Category.assoc]
+    suffices (D.conePoints.map f.1) ≫ (D.obj y.1).π.app x.2 = (D.obj x.1).π.app x.2 ≫ (F.map f.1).app x.2 by
+      slice_rhs 2 3 => rw [← this]
+      rw [Category.id_comp]
+
+      simp only [Category.assoc]
+    #check (D.obj x.1).w f.2
+    simp only [DiagramOfCones.conePoints_obj, DiagramOfCones.conePoints_map, ConeMorphism.w,
+      Cone.postcompose_obj_pt, Cone.postcompose_obj_π, NatTrans.comp_app, Functor.const_obj_obj]
+
+def biduleIsLimit : IsLimit (bidule F D c) := by sorry
+
 def truc : c.pt ≅ cf.pt := by
+  have : Functor.uncurry.obj F ≅  CategoryTheory.Prod.swap _ _⋙ Functor.uncurry.obj F.flip := by
+    apply eqToIso
+    apply CategoryTheory.Functor.ext
+    · simp
+    · simp
+
+  let c' := bidule F D c
+  let h' : IsLimit c':= biduleIsLimit F D c
+
+  let cf' := bidule F.flip Df cf
+  let hf' : IsLimit cf' := biduleIsLimit F.flip Df cf
+
+  #check (CategoryTheory.Functor.Initial.conesEquiv _ _).symm.functor.obj cf'
+
+  let yeah := IsLimit.conePointsIsoOfNatIso
+    h' (IsLimit.ofPreservesConeTerminal
+        (Functor.Initial.conesEquiv (CategoryTheory.Prod.swap J K)
+              (Functor.uncurry.obj F.flip)).symm.functor
+        hf') this
+
+  exact yeah
+
+
+
+
+  #check  CategoryTheory.Limits.HasLimit.isoOfNatIso
+  #check CategoryTheory.Functor.Initial.limitIso
+  #check CategoryTheory.Prod.swap
+  #check coneOfConeUncurryIsLimit
+  #check Limits.limitUncurryIsoLimitCompLim
+  #check CategoryTheory.Limits.limitFlipCompLimIsoLimitCompLim
 
 
   sorry

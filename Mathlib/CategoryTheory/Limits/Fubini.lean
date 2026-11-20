@@ -82,7 +82,8 @@ from a `DiagramOfCones`.
 @[to_dual (attr := simps)
 /-- Extract the functor `J ⥤ C` consisting of the cocone points and the maps between them,
 from a `DiagramOfCocones`.
--/]
+-/,
+implicit_reducible]
 def DiagramOfCones.conePoints (D : DiagramOfCones F) : J ⥤ C where
   obj j := (D.obj j).pt
   map f := (D.map f).hom
